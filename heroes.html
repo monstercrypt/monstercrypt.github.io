@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heróis e Evoluções | Monster Crypt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #020617;
+            color: white;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hero-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px -15px rgba(6, 182, 212, 0.3);
+        }
+
+        .tier-badge {
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .tier-1 {
+            background: #334155;
+            color: #cbd5e1;
+        }
+
+        .tier-2 {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .tier-3 {
+            background: #701a75;
+            color: #f5d0fe;
+            box-shadow: 0 0 15px #a21caf;
+        }
+    </style>
+</head>
+
+<body class="selection:bg-cyan-500 selection:text-slate-900 pb-20">
+
+    <!-- HEADER -->
+    <header class="py-20 text-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-cyan-500/5 blur-[120px] rounded-full"></div>
+        <div class="max-w-4xl mx-auto px-6 relative">
+            <a href="index.html"
+                class="text-xs uppercase tracking-widest text-slate-500 hover:text-cyan-400 transition-colors mb-6 inline-block no-underline border border-white/10 px-4 py-2 rounded-full">←
+                Voltar para o Início</a>
+            <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-4">HERÓIS <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-500">&</span>
+                EVOLUÇÕES</h1>
+            <p class="text-slate-400 text-lg uppercase tracking-widest font-light">Ecossistema de Classes Monster Crypt
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 space-y-32">
+
+        <!-- MYA SECTION -->
+        <section id="mya">
+            <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-1 bg-cyan-500"></div>
+                <h2 class="text-4xl font-black tracking-tight uppercase">Linhagem de <span
+                        class="text-cyan-400">Mya</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 items-stretch">
+                <!-- TIER 1 -->
+                <div class="p-1 rounded-[40px] bg-slate-800/50 hero-card">
+                    <div class="p-8 rounded-[39px] bg-slate-950 h-full flex flex-col">
+                        <span class="tier-badge tier-1 w-fit">Tier 1</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-6">MAGA</h3>
+                        <div class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-white/5">
+                            <img src="maga.png" alt="Maga" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">Início da jornada mágica. Mestre de elementos
+                            básicos e manipulação de mana iniciante.</p>
+                    </div>
+                </div>
+
+                <!-- TIER 2 -->
+                <div class="p-1 rounded-[40px] bg-blue-500/20 hero-card">
+                    <div class="p-8 rounded-[39px] bg-slate-950 h-full flex flex-col border border-blue-500/10">
+                        <span class="tier-badge tier-2 w-fit">Tier 2 (Lv 30)</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-6 text-blue-400">ARQUIMAGA</h3>
+                        <div
+                            class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-blue-500/20">
+                            <img src="arquimaga.png" alt="Arquimaga" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">Poder massivo em área e controle total das
+                            artes arcanas superiores.</p>
+                    </div>
+                </div>
+
+                <!-- TIER 3 -->
+                <div
+                    class="p-1.5 rounded-[40px] bg-gradient-to-br from-cyan-500 to-fuchsia-500 shadow-[0_0_40px_rgba(6,182,212,0.15)] hero-card">
+                    <div class="p-8 rounded-[38px] bg-slate-950 h-full flex flex-col">
+                        <span class="tier-badge tier-3 w-fit">Tier 3 (Lv 50)</span>
+                        <h3
+                            class="text-3xl font-black mt-4 mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400">
+                            MAGA SUPREMA</h3>
+                        <div class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-white/5">
+                            <img src="maga_suprema1.png" alt="Maga Suprema" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6">A aniquilação total. Capaz de drenar
+                            energia de mundos inteiros e anular buffs inimigos.</p>
+                        <div
+                            class="mt-auto p-4 rounded-2xl bg-cyan-400/5 border border-cyan-400/20 uppercase text-[10px] tracking-widest text-cyan-400 font-bold text-center">
+                            Habilidade Mestra: Aniquilação Global
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RYAN SECTION -->
+        <section id="ryan">
+            <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-1 bg-red-500"></div>
+                <h2 class="text-4xl font-black tracking-tight uppercase">Linhagem de <span
+                        class="text-red-500">Ryan</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 items-stretch">
+                <!-- TIER 1 -->
+                <div class="p-1 rounded-[40px] bg-slate-800/50 hero-card">
+                    <div class="p-8 rounded-[39px] bg-slate-950 h-full flex flex-col">
+                        <span class="tier-badge tier-1 w-fit">Tier 1</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-6">GUERREIRO</h3>
+                        <div class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-white/5">
+                            <img src="guerreiro.png" alt="Guerreiro" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">Resiliência e força bruta. O pilar fundamental
+                            de qualquer equipe de exploração.</p>
+                    </div>
+                </div>
+
+                <!-- TIER 2 -->
+                <div class="p-1 rounded-[40px] bg-red-500/20 hero-card">
+                    <div class="p-8 rounded-[39px] bg-slate-950 h-full flex flex-col border border-red-500/10">
+                        <span class="tier-badge tier-2 w-fit" style="background:#450a0a; color:#f87171;">Tier 2 (Lv
+                            30)</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-6 text-red-500">PALADINO</h3>
+                        <div
+                            class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-red-500/20">
+                            <img src="paladino.png" alt="Paladino" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">O escudo inquebrável da humanidade. Foco em
+                            defesa absoluta e cura de aliados.</p>
+                    </div>
+                </div>
+
+                <!-- TIER 3 -->
+                <div
+                    class="p-1.5 rounded-[40px] bg-gradient-to-br from-red-600 to-orange-500 shadow-[0_0_40px_rgba(239,68,68,0.15)] hero-card">
+                    <div class="p-8 rounded-[38px] bg-slate-950 h-full flex flex-col">
+                        <span class="tier-badge tier-3 w-fit"
+                            style="background:#7f1d1d; color:#fca5a5; box-shadow: 0 0 15px #ef4444;">Tier 3 (Lv
+                            50)</span>
+                        <h3
+                            class="text-3xl font-black mt-4 mb-6 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400 uppercase">
+                            JUSTICEIRO</h3>
+                        <div class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-white/5">
+                            <img src="justiceiro.png" alt="Justiceiro" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6">O juiz final do campo de batalha.
+                            Invulnerabilidade divina e dano reflexivo punitivo.</p>
+                        <div
+                            class="mt-auto p-4 rounded-2xl bg-red-400/5 border border-red-400/20 uppercase text-[10px] tracking-widest text-red-500 font-bold text-center">
+                            Habilidade Mestra: Ultimato da Ordem
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LARA SECTION -->
+        <section id="lara">
+            <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-1 bg-emerald-500"></div>
+                <h2 class="text-4xl font-black tracking-tight uppercase">Linhagem de <span
+                        class="text-emerald-500">Lara</span></h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 items-stretch">
+                <!-- TIER 1 -->
+                <div class="p-1 rounded-[40px] bg-slate-800/50 hero-card">
+                    <div class="p-8 rounded-[39px] bg-slate-950 h-full flex flex-col">
+                        <span class="tier-badge tier-1 w-fit">Tier 1</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-6">ARQUEIRA</h3>
+                        <div class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-white/5">
+                            <img src="arqueira.png" alt="Arqueira" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">Precisão cirúrgica e velocidade. Especialista
+                            em dano crítico à longa distância.</p>
+                    </div>
+                </div>
+
+                <!-- TIER 2 -->
+                <div class="p-1 rounded-[40px] bg-emerald-500/20 hero-card">
+                    <div class="p-8 rounded-[39px] bg-slate-950 h-full flex flex-col border border-emerald-500/10">
+                        <span class="tier-badge tier-2 w-fit" style="background:#064e3b; color:#6ee7b7;">Tier 2 (Lv
+                            30)</span>
+                        <h3 class="text-2xl font-bold mt-4 mb-6 text-emerald-500 uppercase">FRANCO-ATIRADORA</h3>
+                        <div
+                            class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-emerald-500/20">
+                            <img src="franco_atiradora.png" alt="Franco-Atiradora" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">Onde ela mira, o destino está selado. Aumento
+                            massivo de alcance e precisão.</p>
+                    </div>
+                </div>
+
+                <!-- TIER 3 -->
+                <div
+                    class="p-1.5 rounded-[40px] bg-gradient-to-br from-emerald-600 to-green-400 shadow-[0_0_40px_rgba(16,185,129,0.15)] hero-card">
+                    <div class="p-8 rounded-[38px] bg-slate-950 h-full flex flex-col">
+                        <span class="tier-badge tier-3 w-fit"
+                            style="background:#064e3b; color:#a7f3d0; box-shadow: 0 0 15px #10b981;">Tier 3 (Lv
+                            50)</span>
+                        <h3
+                            class="text-3xl font-black mt-4 mb-6 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300 uppercase">
+                            ATIRADORA DE ELITE</h3>
+                        <div class="aspect-square bg-slate-900 rounded-3xl mb-6 overflow-hidden border border-white/5">
+                            <img src="atiradora_elite.png" alt="Atiradora de Elite" class="w-full h-full object-cover">
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed mb-6 font-medium">A morte silenciosa que nunca
+                            erra. Ataques letais que atravessam qualquer defesa.</p>
+                        <div
+                            class="mt-auto p-4 rounded-2xl bg-emerald-400/5 border border-emerald-400/20 uppercase text-[10px] tracking-widest text-emerald-400 font-bold text-center">
+                            Habilidade Mestra: Tiro Fantasma
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-40 py-20 border-t border-white/5 text-center">
+        <div class="flex justify-center gap-8 mb-8 opacity-50">
+            <span class="text-[10px] tracking-widest uppercase">Ryan / Warrior Tree</span>
+            <span class="text-[10px] tracking-widest uppercase">Mya / Mage Tree</span>
+            <span class="text-[10px] tracking-widest uppercase">Lara / Archer Tree</span>
+        </div>
+        <p class="text-slate-600 text-xs">© 2026 Monster Crypt Lore - High Fantasy Blockhain MMORPG</p>
+    </footer>
+
+</body>
+
+</html>
