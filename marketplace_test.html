@@ -39,6 +39,10 @@
 </head>
 
 <body class="pb-20" onload="initWeb3()">
+    <!-- WEB3 DIAGNOSIS BANNER -->
+    <div id="web3-status-banner" class="bg-cyan-500/10 border-b border-cyan-500/20 py-2 px-6 text-[10px] font-bold uppercase tracking-widest text-cyan-500 text-center">
+        🔎 Verificando Provedor de Carteira...
+    </div>
 
     <!-- HEADER / WALLET BAR -->
     <nav class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
@@ -132,23 +136,38 @@
         // TÉCNICA DE DETECÇÃO ULTRA-SENSÍVEL
         async function initWeb3() {
             debugLog("Iniciando busca por carteira...");
+            
+            let walletName = "Nenhuma Detectada";
             if (window.ethereum) {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    debugLog("✅ Conta já autorizada detectada!");
-                    account = accounts[0];
-                    provider = new ethers.BrowserProvider(window.ethereum);
-                    signer = await provider.getSigner();
-                    updateUI(account);
-                    fetchBalance();
-                } else {
-                    handleEthereum();
+                if (window.ethereum.isMetaMask) walletName = "MetaMask 🦊";
+                else if (window.ethereum.isGate) walletName = "Gate Wallet 🌐";
+                else if (window.ethereum.isBraveWallet) walletName = "Brave Wallet 🦁";
+                else walletName = "Outra Carteira 👤";
+                
+                debugLog("📡 Provedor Detectado: " + walletName);
+                document.getElementById('web3-status-banner').innerHTML = `Detetamos: <b>${walletName}</b>`;
+
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        debugLog("✅ Conta autorizada encontrada.");
+                        account = accounts[0];
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                        signer = await provider.getSigner();
+                        updateUI(account);
+                        fetchBalance();
+                    } else {
+                        debugLog("⚠️ Alerta: Esta carteira (${walletName}) não possui contas ativas.");
+                        document.getElementById('web3-status-banner').innerHTML += ` | <span class='text-amber-400'>⚠️ Erro: Esta carteira está VAZIA ou BLOQUEADA.</span>`;
+                        handleEthereum();
+                    }
+                } catch (e) {
+                    debugLog("Erro no init: " + e.message);
                 }
             } else {
+                debugLog("❌ Nenhuma carteira encontrada no navegador.");
+                document.getElementById('web3-status-banner').innerHTML = "❌ Nenhuma carteira Web3 encontrada.";
                 window.addEventListener('ethereum#initialized', handleEthereum, { once: true });
-                setTimeout(() => {
-                    if (!window.ethereum) debugLog("⚠️ Nenhuma carteira injetada. Verifique se a extensão está ativa.");
-                }, 3000);
             }
         }
 
