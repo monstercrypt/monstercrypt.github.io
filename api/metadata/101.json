@@ -1,0 +1,11 @@
+{
+    "name": "Maga Suprema",
+    "description": "Uma feiticeira dimensional capaz de manipular o código fonte da realidade.",
+    "image": "https://monstercrypt.github.io/maga_suprema.png",
+    "attributes": [
+        { "trait_type": "Classe", "value": "Mítico" },
+        { "trait_type": "Poder", "value": 950 },
+        { "trait_type": "Elemento", "value": "Neon" },
+        { "trait_type": "Nível", "value": 1 }
+    ]
+}

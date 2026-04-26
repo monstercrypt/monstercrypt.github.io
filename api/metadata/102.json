@@ -1,0 +1,11 @@
+{
+    "name": "Void Reaper",
+    "description": "O ceifador das sombras digitais, mestre da furtividade e do dano crítico.",
+    "image": "https://monstercrypt.github.io/void_reaper.png",
+    "attributes": [
+        { "trait_type": "Classe", "value": "Lendário" },
+        { "trait_type": "Poder", "value": 820 },
+        { "trait_type": "Velocidade", "value": 99 },
+        { "trait_type": "Dano Crítico", "value": "250%" }
+    ]
+}
