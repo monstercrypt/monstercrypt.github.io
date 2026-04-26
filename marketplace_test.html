@@ -38,7 +38,7 @@
     </style>
 </head>
 
-<body class="pb-20">
+<body class="pb-20" onload="initWeb3()">
 
     <!-- HEADER / WALLET BAR -->
     <nav class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
@@ -86,6 +86,22 @@
 
     </main>
 
+
+    <!-- DEBUG CONSOLE -->
+    <div class="max-w-7xl mx-auto px-6 mt-20">
+        <div class="p-6 rounded-2xl bg-slate-900/50 border border-white/5">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-cyan-500 rounded-full"></span> Terminal de Debug Web3
+                </h4>
+                <button onclick="resetConnection()" class="text-[10px] font-bold text-cyan-500 hover:text-white transition-all uppercase tracking-widest">Resetar Busca</button>
+            </div>
+            <div id="debug-log" class="font-mono text-[10px] text-slate-400 h-32 overflow-y-auto space-y-1">
+                <div>[SISTEMA] Aguardando interação do usuário...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- BUY MODAL SIMULATION -->
     <div id="modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-6">
         <div class="bg-slate-900 border border-white/10 w-full max-w-md p-8 rounded-[32px] text-center">
@@ -113,45 +129,69 @@
         let provider, signer, account;
         let balance = 0;
 
-        // Verificador cíclico para ambientes onde a injeção é lenta (especialmente file://)
-        window.addEventListener('load', () => {
-            const checkInterval = setInterval(() => {
-                if (window.ethereum) {
-                    console.log("MetaMask detectada via pooling!");
-                    document.getElementById('connect-btn').innerText = "Conectar MetaMask 🦊";
-                    document.getElementById('connect-btn').classList.remove('opacity-50');
-                    clearInterval(checkInterval);
-                } else {
-                    document.getElementById('connect-btn').innerText = "Aguardando MetaMask...";
-                    document.getElementById('connect-btn').classList.add('opacity-50');
-                }
-            }, 1000);
-        });
-
-        async function connectWallet() {
-            const providerDetected = window.ethereum || (window.web3 && window.web3.currentProvider);
-
-            if (providerDetected) {
-                try {
-                    provider = new ethers.BrowserProvider(providerDetected);
-                    const accounts = await provider.send("eth_requestAccounts", []);
+        // TÉCNICA DE DETECÇÃO ULTRA-SENSÍVEL
+        async function initWeb3() {
+            debugLog("Iniciando busca por carteira...");
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    debugLog("✅ Conta já autorizada detectada!");
                     account = accounts[0];
+                    provider = new ethers.BrowserProvider(window.ethereum);
                     signer = await provider.getSigner();
-                    
                     updateUI(account);
                     fetchBalance();
-                    
-                    window.ethereum.on('accountsChanged', (accounts) => {
-                        account = accounts[0];
-                        updateUI(account);
-                        fetchBalance();
-                    });
-                } catch (error) {
-                    alert("Erro na conexão: " + error.message);
+                } else {
+                    handleEthereum();
                 }
             } else {
-                alert("ERRO CRÍTICO: MetaMask não encontrada.\n\nSugestão: Use o comando 'npx serve .' no seu terminal e abra o link http://localhost:3000");
+                window.addEventListener('ethereum#initialized', handleEthereum, { once: true });
+                setTimeout(() => {
+                    if (!window.ethereum) debugLog("⚠️ Nenhuma carteira injetada. Verifique se a extensão está ativa.");
+                }, 3000);
             }
+        }
+
+        function handleEthereum() {
+            debugLog("✅ Carteira pronta para conexão!");
+            const btn = document.getElementById('connect-btn');
+            btn.innerText = "Conectar MetaMask 🦊";
+            btn.classList.remove('opacity-50');
+            btn.disabled = false;
+        }
+
+        async function connectWallet() {
+            const btn = document.getElementById('connect-btn');
+            debugLog("Solicitando abertura da MetaMask...");
+
+            try {
+                btn.innerText = "ABRINDO JANELA...";
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                account = accounts[0];
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+                
+                debugLog("Conectado com sucesso!");
+                updateUI(account);
+                fetchBalance();
+            } catch (error) {
+                btn.innerText = "Conectar MetaMask 🦊";
+                const errorDetail = error.message || error.code || "Erro desconhecido";
+                debugLog("DETALHE DO ERRO: " + errorDetail);
+                
+                // Alerta detalhado para o usuário
+                alert("DETALHE DO ERRO METAMASK:\n\n" + errorDetail + "\n\nSe for 'User Rejected', você apenas fechou a janela. Se for outro código, me avise!");
+            }
+        }
+
+        function resetConnection() {
+            window.location.reload();
+        }
+
+        function debugLog(msg) {
+            const log = document.getElementById('debug-log');
+            log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            log.scrollTop = log.scrollHeight;
         }
 
         function updateUI(acc) {
