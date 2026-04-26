@@ -58,10 +58,15 @@
 
             <div class="flex items-center gap-4">
                 <!-- WALLET SECTION -->
-                <div id="wallet-info" class="hidden bg-slate-900 border border-white/10 rounded-full px-4 py-2 flex items-center gap-3">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span id="user-address" class="text-[10px] font-mono text-slate-500 tracking-tighter">0x00...000</span>
-                    <span id="balance" class="text-cyan-400 font-black text-xs">0 $MCT</span>
+                <div id="wallet-info" class="hidden flex items-center gap-4">
+                    <div class="bg-slate-900 border border-white/10 rounded-full px-4 py-2 flex items-center gap-3">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span id="user-address" class="text-[10px] font-mono text-slate-500 tracking-tighter">0x00...000</span>
+                        <span id="balance" class="text-cyan-400 font-black text-xs">0 $MCT</span>
+                    </div>
+                    <button onclick="disconnectWallet()" class="p-2 rounded-full bg-slate-800 hover:bg-red-500/20 hover:text-red-500 transition-all text-[10px] font-bold uppercase" title="Desconectar">
+                        Sair 🚪
+                    </button>
                 </div>
                 
                 <button id="connect-btn" onclick="connectWallet()" class="px-6 py-2 rounded-full bg-cyan-500 text-slate-950 font-bold text-xs uppercase tracking-widest hover:bg-cyan-400 transition-all">Conectar Carteira</button>
@@ -75,17 +80,32 @@
             <span>⚠️ Por favor, mude sua MetaMask para a rede **BNB Chain (BSC)** para ver seu saldo de $MCT.</span>
         </div>
         
-        <!-- FILTERS -->
-        <div class="flex flex-wrap gap-4 mb-12">
-            <button class="px-6 py-2 rounded-full bg-cyan-500 text-slate-950 font-bold text-sm">Todos</button>
-            <button class="px-6 py-2 rounded-full bg-slate-900 border border-white/10 hover:border-cyan-500 transition-all text-sm">Equipamentos</button>
-            <button class="px-6 py-2 rounded-full bg-slate-900 border border-white/10 hover:border-cyan-500 transition-all text-sm">Consumíveis</button>
-            <button class="px-6 py-2 rounded-full bg-slate-900 border border-white/10 hover:border-cyan-500 transition-all text-sm">Artefatos</button>
+        <!-- FILTERS & TABS -->
+        <div class="flex flex-wrap items-center justify-between gap-6 mb-12">
+            <div class="flex flex-wrap gap-4">
+                <button onclick="toggleView('market')" id="market-tab" class="px-8 py-3 rounded-full bg-cyan-500 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all">Mercado</button>
+                <button onclick="toggleView('inventory')" id="inventory-tab" class="px-8 py-3 rounded-full bg-slate-900 border border-white/10 hover:border-cyan-500 transition-all text-sm font-bold">Meu Inventário (<span id="inv-count">0</span>)</button>
+            </div>
+            
+            <div id="market-filters" class="flex flex-wrap gap-4">
+                <button class="px-6 py-2 rounded-full bg-slate-800 text-white text-xs font-bold border border-white/5">Equipamentos</button>
+                <button class="px-6 py-2 rounded-full bg-slate-800 text-white text-xs font-bold border border-white/5">Consumíveis</button>
+            </div>
         </div>
 
-        <!-- ITEMS GRID -->
-        <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            <!-- Items will be injected by JavaScript -->
+        <!-- MARKET VIEW -->
+        <div id="market-view">
+            <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <!-- Items will be injected by JavaScript -->
+            </div>
+        </div>
+
+        <!-- INVENTORY VIEW -->
+        <div id="inventory-view" class="hidden">
+            <h2 class="text-3xl font-black mb-8">Meu <span class="text-cyan-400">Baú</span></h2>
+            <div id="inventory-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
+                <!-- Inventory items -->
+            </div>
         </div>
 
     </main>
@@ -122,7 +142,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script>
-        const MCT_ADDRESS = "0x46d8b9A261cb91928144c42124Cc1fdd5B9A3d6F";
+        const MCT_ADDRESS = "0x46d8b9a261cb91928144c42124Cc1fdd5b9a3d6f".toLowerCase();
+        const TREASURY_ADDRESS = "0xe089ab5666ed8a37562d500c12c82f6d132acfaa".toLowerCase(); // Sua carteira de tesouraria
         const MCT_ABI = [
             "function balanceOf(address owner) view returns (uint256)",
             "function decimals() view returns (uint8)",
@@ -133,42 +154,69 @@
         let provider, signer, account;
         let balance = 0;
 
-        // TÉCNICA DE DETECÇÃO ULTRA-SENSÍVEL
+        // TÉCNICA DE DETECÇÃO DE TRIPLA CAMADA (ULTRA-AGRESSIVA)
         async function initWeb3() {
-            debugLog("Iniciando busca por carteira...");
+            debugLog("Iniciando busca profunda por carteira...");
             
-            let walletName = "Nenhuma Detectada";
-            if (window.ethereum) {
-                if (window.ethereum.isMetaMask) walletName = "MetaMask 🦊";
-                else if (window.ethereum.isGate) walletName = "Gate Wallet 🌐";
-                else if (window.ethereum.isBraveWallet) walletName = "Brave Wallet 🦁";
-                else walletName = "Outra Carteira 👤";
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            const checkProvider = async () => {
+                attempts++;
+                let walletName = "Nenhuma Detectada";
                 
-                debugLog("📡 Provedor Detectado: " + walletName);
-                document.getElementById('web3-status-banner').innerHTML = `Detetamos: <b>${walletName}</b>`;
+                // Tenta encontrar qualquer provedor disponível (MetaMask, Gate, Brave, etc)
+                const providerDetected = window.ethereum || 
+                                       (window.gate && window.gate.ethereum) || 
+                                       window.xfi || 
+                                       (window.web3 && window.web3.currentProvider);
 
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        debugLog("✅ Conta autorizada encontrada.");
-                        account = accounts[0];
-                        provider = new ethers.BrowserProvider(window.ethereum);
-                        signer = await provider.getSigner();
-                        updateUI(account);
-                        fetchBalance();
-                    } else {
-                        debugLog("⚠️ Alerta: Esta carteira (${walletName}) não possui contas ativas.");
-                        document.getElementById('web3-status-banner').innerHTML += ` | <span class='text-amber-400'>⚠️ Erro: Esta carteira está VAZIA ou BLOQUEADA.</span>`;
-                        handleEthereum();
+                if (providerDetected) {
+                    clearInterval(searchInterval);
+                    
+                    if (providerDetected.isMetaMask) walletName = "MetaMask 🦊";
+                    else if (providerDetected.isGate || (window.gate && window.gate.ethereum)) walletName = "Gate Wallet 🌐";
+                    else if (providerDetected.isBraveWallet) walletName = "Brave Wallet 🦁";
+                    else walletName = "Carteira Detectada 👤";
+                    
+                    try {
+                        provider = new ethers.BrowserProvider(providerDetected);
+                        const network = await provider.getNetwork();
+                        
+                        debugLog(`✅ CONECTADO: ${walletName}`);
+                        const statusBanner = document.getElementById('web3-status-banner');
+                        
+                        if (network.chainId !== 56n && network.chainId !== 56) {
+                            statusBanner.innerHTML = `⚠️ REDE INCORRETA (${network.chainId}) | <button onclick="switchNetwork()" class="underline font-black">MUDAR PARA BNB CHAIN</button>`;
+                            statusBanner.className = "bg-amber-500 text-slate-950 py-2 px-6 text-[10px] font-bold uppercase text-center";
+                            document.getElementById('web3-alert').classList.remove('hidden');
+                        } else {
+                            statusBanner.innerHTML = `Rede: <b>BNB Chain</b> | Carteira: <b>${walletName}</b>`;
+                            statusBanner.className = "bg-cyan-500/10 border-b border-cyan-500/20 py-2 px-6 text-[10px] font-bold uppercase text-cyan-500 text-center";
+                            document.getElementById('web3-alert').classList.add('hidden');
+                        }
+
+                        const accounts = await providerDetected.request({ method: 'eth_accounts' });
+                        if (accounts.length > 0) {
+                            account = accounts[0];
+                            signer = await provider.getSigner();
+                            updateUI(account);
+                            fetchBalance();
+                        } else {
+                            handleEthereum();
+                        }
+                    } catch (e) {
+                        debugLog("Conflito de carteira: " + e.message);
+                        document.getElementById('web3-status-banner').innerHTML = `❌ Erro: Conflito entre carteiras detectado. Desative uma das extensões.`;
                     }
-                } catch (e) {
-                    debugLog("Erro no init: " + e.message);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(searchInterval);
+                    debugLog("❌ Nenhuma carteira ativa encontrada.");
                 }
-            } else {
-                debugLog("❌ Nenhuma carteira encontrada no navegador.");
-                document.getElementById('web3-status-banner').innerHTML = "❌ Nenhuma carteira Web3 encontrada.";
-                window.addEventListener('ethereum#initialized', handleEthereum, { once: true });
-            }
+            };
+
+            const searchInterval = setInterval(checkProvider, 500);
+            window.addEventListener('ethereum#initialized', checkProvider, { once: true });
         }
 
         function handleEthereum() {
@@ -203,8 +251,37 @@
             }
         }
 
-        function resetConnection() {
-            window.location.reload();
+        async function switchNetwork() {
+            try {
+                debugLog("Solicitando troca para a rede BNB Chain...");
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x38' }], // 56 em Hex
+                });
+            } catch (switchError) {
+                // Se a rede não estiver cadastrada na MetaMask
+                if (switchError.code === 4902) {
+                    debugLog("Rede BNB não encontrada. Adicionando...");
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: '0x38',
+                            chainName: 'BNB Smart Chain',
+                            nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+                            rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                            blockExplorerUrls: ['https://bscscan.com/']
+                        }]
+                    });
+                }
+            }
+        }
+
+        function disconnectWallet() {
+            account = null;
+            document.getElementById('wallet-info').classList.add('hidden');
+            document.getElementById('connect-btn').classList.remove('hidden');
+            document.getElementById('balance').innerText = "0 $MCT";
+            debugLog("👋 Carteira desconectada do site.");
         }
 
         function debugLog(msg) {
@@ -223,8 +300,9 @@
             try {
                 const contract = new ethers.Contract(MCT_ADDRESS, MCT_ABI, provider);
                 const rawBalance = await contract.balanceOf(account);
-                const decimals = await contract.decimals();
-                balance = parseFloat(ethers.formatUnits(rawBalance, decimals));
+                tokenDecimals = await contract.decimals();
+                
+                balance = parseFloat(ethers.formatUnits(rawBalance, tokenDecimals));
                 
                 document.getElementById('balance').innerText = balance.toLocaleString() + " $MCT";
             } catch (error) {
@@ -234,23 +312,55 @@
         }
 
         const items = [
-            { id: 1, name: "Lâmina de Plasma", rarity: "Comum", price: 250, icon: "⚔️", type: "Equipamento", color: "rarity-common" },
-            { id: 2, name: "Cajado de Mana", rarity: "Raro", price: 850, icon: "🔮", type: "Equipamento", color: "rarity-rare" },
-            { id: 3, name: "Arco de Neon", rarity: "Épico", price: 2100, icon: "🏹", type: "Equipamento", color: "rarity-epic" },
-            { id: 4, name: "Ovo Misterioso", rarity: "Raro", price: 1200, icon: "🥚", type: "Consumível", color: "rarity-rare" },
-            { id: 5, name: "Reset de Status", rarity: "Comum", price: 500, icon: "🧪", type: "Consumível", color: "rarity-common" },
-            { id: 6, name: "Núcleo Void", rarity: "Lendário", price: 9500, icon: "💎", type: "Artefato", color: "rarity-legendary" },
-            { id: 7, name: "Botas Etéreas", rarity: "Raro", price: 1100, icon: "🥾", type: "Equipamento", color: "rarity-rare" },
-            { id: 8, name: "Escudo Digital", rarity: "Comum", price: 300, icon: "🛡️", type: "Equipamento", color: "rarity-common" },
-            { id: 9, name: "Pena de Fênix", rarity: "Lendário", price: 8000, icon: "🪶", type: "Artefato", color: "rarity-legendary" },
-            { id: 10, name: "Chip Upgrade", rarity: "Épico", price: 3500, icon: "💾", type: "Upgrade", color: "rarity-epic" }
+            { id: 101, name: "Maga Suprema", rarity: "Mítico", price: 1500000, icon: "maga_suprema.png", isImage: true, type: "Monstro", color: "rarity-legendary" },
+            { id: 102, name: "Void Reaper", rarity: "Lendário", price: 3200000, icon: "void_reaper.png", isImage: true, type: "Monstro", color: "rarity-legendary" },
+            { id: 1, name: "Lâmina de Plasma", rarity: "Comum", price: 250000, icon: "⚔️", isImage: false, type: "Equipamento", color: "rarity-common" },
+            { id: 2, name: "Cajado de Mana", rarity: "Raro", price: 850000, icon: "🔮", isImage: false, type: "Equipamento", color: "rarity-rare" },
+            { id: 3, name: "Arco de Neon", rarity: "Épico", price: 2100000, icon: "🏹", isImage: false, type: "Equipamento", color: "rarity-epic" },
+            { id: 4, name: "Ovo Misterioso", rarity: "Raro", price: 1200000, icon: "🥚", isImage: false, type: "Consumível", color: "rarity-rare" },
+            { id: 6, name: "Núcleo Void", rarity: "Lendário", price: 9500000, icon: "💎", isImage: false, type: "Artefato", color: "rarity-legendary" },
+            { id: 10, name: "Chip Upgrade", rarity: "Épico", price: 3500000, icon: "💾", isImage: false, type: "Upgrade", color: "rarity-epic" }
         ];
+
+        let myInventory = JSON.parse(localStorage.getItem('monster_crypt_inv') || '[]');
+
+        function toggleView(view) {
+            const marketGrid = document.getElementById('market-view');
+            const invGrid = document.getElementById('inventory-view');
+            const marketTab = document.getElementById('market-tab');
+            const invTab = document.getElementById('inventory-tab');
+            const filters = document.getElementById('market-filters');
+
+            if (view === 'market') {
+                marketGrid.classList.remove('hidden');
+                invGrid.classList.add('hidden');
+                filters.classList.remove('hidden');
+                marketTab.className = "px-8 py-3 rounded-full bg-cyan-500 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all";
+                invTab.className = "px-8 py-3 rounded-full bg-slate-900 border border-white/10 hover:border-cyan-500 transition-all text-sm font-bold";
+                renderItems();
+            } else {
+                marketGrid.classList.add('hidden');
+                invGrid.classList.remove('hidden');
+                filters.classList.add('hidden');
+                invTab.className = "px-8 py-3 rounded-full bg-cyan-500 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all";
+                marketTab.className = "px-8 py-3 rounded-full bg-slate-900 border border-white/10 hover:border-cyan-500 transition-all text-sm font-bold";
+                renderInventory();
+            }
+        }
 
         function renderItems() {
             const grid = document.getElementById('items-grid');
-            grid.innerHTML = items.map(item => `
-                <div class="cyber-card p-6 rounded-[24px] flex flex-col h-full border border-white/5">
-                    <div class="text-4xl mb-6 h-16 flex items-center justify-center bg-white/5 rounded-2xl">${item.icon}</div>
+            grid.innerHTML = items.map(item => {
+                const isOwned = myInventory.some(invItem => invItem.id === item.id);
+                const displayIcon = item.isImage ? `<img src="${item.icon}" class="w-full h-full object-cover">` : item.icon;
+                
+                return `
+                <div class="glass-card p-5 rounded-2xl flex flex-col h-full hover-glow transition-all duration-500 border border-white/5 group ${isOwned ? 'opacity-80' : ''}">
+                    <div class="relative mb-6 aspect-square rounded-xl bg-slate-900/50 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform duration-500 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        ${displayIcon}
+                        ${isOwned ? '<div class="absolute inset-0 bg-slate-950/60 flex items-center justify-center"><span class="bg-cyan-500 text-slate-950 text-[8px] font-black px-2 py-1 rounded tracking-tighter">ADQUIRIDO NO BAÚ</span></div>' : ''}
+                    </div>
                     <div class="mb-4">
                         <span class="text-[10px] font-black uppercase tracking-widest ${item.color}">${item.rarity}</span>
                         <h3 class="font-bold text-lg leading-tight truncate">${item.name}</h3>
@@ -258,12 +368,40 @@
                     <div class="mt-auto">
                         <div class="price-tag px-3 py-2 rounded-lg flex items-center justify-between mb-4">
                             <span class="text-xs text-slate-400 font-bold">PREÇO</span>
-                            <span class="text-cyan-400 font-black text-sm">${item.price} MCT</span>
+                            <span class="text-cyan-400 font-black text-sm">${item.price.toLocaleString()} MCT</span>
                         </div>
-                        <button onclick="openModal(${item.id})" class="w-full py-2 rounded-xl bg-white/5 hover:bg-cyan-500 hover:text-slate-950 transition-all text-xs font-bold uppercase tracking-widest">Comprar</button>
+                        <button onclick="${isOwned ? 'alert(\'Você já possui este item!\')' : `openModal(${item.id})`}" 
+                                class="w-full py-2 rounded-xl transition-all text-xs font-bold uppercase tracking-widest ${isOwned ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white/5 hover:bg-cyan-500 hover:text-slate-950'}">
+                            ${isOwned ? 'No Inventário' : 'Comprar'}
+                        </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+            document.getElementById('inv-count').innerText = myInventory.length;
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid');
+            if (myInventory.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl">
+                        <div class="text-4xl mb-4">🦇</div>
+                        <p class="text-slate-500 font-medium tracking-tight">Seu baú está vazio.<br>Vá ao mercado e use seus MCT!</p>
+                    </div>
+                `;
+                return;
+            }
+            grid.innerHTML = myInventory.map(item => {
+                const displayIcon = item.isImage ? `<img src="${item.icon}" class="w-full h-full object-cover">` : item.icon;
+                return `
+                <div class="glass-card p-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 hover-glow transition-all">
+                    <div class="aspect-square rounded-xl bg-slate-950 flex items-center justify-center text-4xl mb-4 overflow-hidden border border-white/5">
+                        ${displayIcon}
+                    </div>
+                    <h3 class="font-bold text-white mb-1 tracking-tight truncate">${item.name}</h3>
+                    <span class="text-[8px] font-black uppercase tracking-widest ${item.color}">${item.rarity}</span>
+                </div>
+            `}).join('');
         }
 
         let selectedItem = null;
@@ -277,38 +415,79 @@
             document.getElementById('modal-title').innerText = selectedItem.name;
             document.getElementById('modal-rarity').innerText = selectedItem.rarity;
             document.getElementById('modal-rarity').className = `text-xs font-black uppercase tracking-[0.2em] mb-6 ${selectedItem.color}`;
-            document.getElementById('modal-icon').innerText = selectedItem.icon;
+            
+            const modalIcon = document.getElementById('modal-icon');
+            if (selectedItem.isImage) {
+                modalIcon.innerHTML = `<img src="${selectedItem.icon}" class="w-32 h-32 mx-auto rounded-2xl object-cover shadow-2xl">`;
+            } else {
+                modalIcon.innerHTML = selectedItem.icon;
+            }
+            
             document.getElementById('modal').style.display = 'flex';
             
-            document.getElementById('confirm-btn').onclick = () => buyItem();
+            document.getElementById('confirm-btn').onclick = () => buyItem(selectedItem.name, selectedItem.price);
         }
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
 
-        async function buyItem() {
-            if (balance >= selectedItem.price) {
-                try {
-                    // MUDANÇA PARA TRANSAÇÃO REAL:
-                    // Aqui simularia ou enviaria para o endereço da Tesouraria/Marketplace
-                    alert(`Iniciando transação Web3 para ${selectedItem.name}...\n\nPor favor, confirme na sua MetaMask.`);
+        let tokenDecimals = 18; // Padrão
+
+        async function buyItem(itemName, priceMCT) {
+            if (!account) {
+                alert("Por favor, conecte sua MetaMask primeiro!");
+                return;
+            }
+
+            try {
+                debugLog(`🛒 [CONTROLE] Preparando compra: ${itemName}...`);
+                
+                const contract = new ethers.Contract(MCT_ADDRESS, MCT_ABI, signer);
+                
+                // Usa os decimais reais detectados no fetchBalance
+                const amount = ethers.parseUnits(priceMCT.toString(), tokenDecimals);
+                
+                debugLog(`⏳ [AÇÃO] Solicitação enviada à carteira. CONFIRME na MetaMask.`);
+                
+                const tx = await contract.transfer(TREASURY_ADDRESS, amount);
+                
+                debugLog(`🚀 [REDE] Transação Detectada! Hash: ${tx.hash.substring(0, 20)}...`);
+                debugLog(`🔗 <a href="https://bscscan.com/tx/${tx.hash}" target="_blank" style="color:#22d3ee;text-decoration:underline">Ver no BscScan</a>`);
+                
+                alert("Transação enviada! Aguardando confirmação da BNB Chain...");
+                closeModal();
+                
+                const receipt = await tx.wait();
+                
+                if (receipt.status === 1) {
+                    debugLog(`✅ [SUCESSO] Compra de ${itemName} concluída!`);
                     
-                    const contract = new ethers.Contract(MCT_ADDRESS, MCT_ABI, signer);
-                    const amount = ethers.parseUnits(selectedItem.price.toString(), 18);
+                    // SALVAR NO INVENTÁRIO LOCAL
+                    const purchasedItem = items.find(i => i.name === itemName);
+                    if (purchasedItem && !myInventory.some(i => i.id === purchasedItem.id)) {
+                        myInventory.push(purchasedItem);
+                        localStorage.setItem('monster_crypt_inv', JSON.stringify(myInventory));
+                    }
                     
-                    // Exemplo: Enviando para a carteira de teste (owner ou contrato marketplace)
-                    // const tx = await contract.transfer("ENDERECO_DO_MARKETPLACE", amount);
-                    // await tx.wait();
-                    
-                    alert("Simulação de transação enviada para a rede!");
-                    closeModal();
-                    fetchBalance(); // Atualiza saldo após compra
-                } catch (error) {
-                    console.error("Erro na transação", error);
+                    alert(`SUCESSO! O ${itemName} agora aparece no seu inventário.`);
+                    renderItems();
+                    fetchBalance();
+                } else {
+                    debugLog("❌ [FALHA] A transação foi revertida pela rede.");
                 }
-            } else {
-                alert("Saldo insuficiente em $MCT!");
+
+            } catch (error) {
+                console.error(error);
+                const detailedError = error.reason || error.message || "Erro desconhecido";
+                
+                let msg = "Erro na transação";
+                if (error.code === 'INSUFFICIENT_FUNDS') msg = "BNB insuficiente para taxas!";
+                else if (error.message.includes("rejected")) msg = "Você recusou a transação.";
+                else msg = "DETALHE DO ERRO:\n" + detailedError;
+                
+                debugLog(`❌ ERRO: ${detailedError}`);
+                alert(msg);
             }
         }
 
